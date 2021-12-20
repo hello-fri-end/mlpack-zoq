@@ -3687,7 +3687,7 @@ TEST_CASE("ConvolutionLayerParametersTest", "[ANNLayerTest]")
 /**
  * Test that the padding options are working correctly in Convolution layer.
  */
-TEST_CASE("ConvolutionLayerPaddingTest", "[ANNLayerTest]")
+TEST_CASE("ConvolutionLayerPaddingTest1", "[ANNLayerTest]")
 {
   arma::mat output, input, delta;
 
@@ -3738,6 +3738,57 @@ TEST_CASE("ConvolutionLayerPaddingTest", "[ANNLayerTest]")
   module2.Backward(input, output, delta);
 }
 
+TEST_CASE("ConvolutionLayerPaddingTest2", "[ANNLayerTest]")
+{
+  arma::mat output, input, delta;
+
+  // Check valid padding option.
+  Convolution module1(1, 3, 3, 2, 2, 0, 0, "valid");
+  module1.InputDimensions() = std::vector<size_t>({ 6, 6 });
+  module1.ComputeOutputDimensions();
+  arma::mat weights1(module1.WeightSize(), 1);
+//  REQUIRE(weights1.n_elem == 10);
+  module1.SetWeights(weights1.memptr());
+
+  // Test the Forward function.
+  input.ones(36, 1);
+  output.set_size(module1.OutputSize(), 1);
+  module1.Parameters().zeros();
+  module1.Forward(input, output);
+
+  REQUIRE(arma::accu(output) == 0);
+  REQUIRE(output.n_rows == 4);
+  REQUIRE(output.n_cols == 1);
+
+  // Test the Backward function.
+  delta.set_size(arma::size(input));
+  module1.Backward(input, output, delta);
+
+  REQUIRE(arma::accu(delta) == 0);
+
+  // Check same padding option.
+  Convolution module2(1, 3, 3, 2, 2, 0, 0, "same");
+  module2.InputDimensions() = std::vector<size_t>({ 6, 6 });
+  module2.ComputeOutputDimensions();
+  arma::mat weights2(module2.WeightSize(), 1);
+  //REQUIRE(weights2.n_elem == 10);
+  module2.SetWeights(weights2.memptr());
+
+  // Test the forward function.
+  input.ones(36, 1);
+  output.set_size(module2.OutputSize(), 1);
+  module2.Parameters().zeros();
+  module2.Forward(input, output);
+
+  REQUIRE(arma::accu(output) == 0);
+  REQUIRE(output.n_rows == 36);
+  REQUIRE(output.n_cols == 1);
+
+  // Test the backward function.
+  delta.set_size(arma::size(input));
+  module2.Backward(input, output, delta);
+  REQUIRE(arma::accu(delta) == 0);
+}
 /**
  * Convolution layer numerical gradient test.
  */
